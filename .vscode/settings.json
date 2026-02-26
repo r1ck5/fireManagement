@@ -1,0 +1,38 @@
+{
+  "dart.sdkPath": "/home/krs/.flutter/bin/cache/dart-sdk",
+  "dart.flutterSdkPath": "/home/krs/.flutter",
+  "dart.lineLength": 80,
+  "dart.enableSdkFormatter": true,
+  "editor.formatOnSave": true,
+  "[dart]": {
+    "editor.defaultFormatter": "Dart-Code.dart-code",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit"
+    }
+  },
+  "search.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/pubspec.lock": true,
+    "**/.pub-cache": true,
+    "**/.gradle": true,
+    "**/android/.gradle": true
+  },
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true,
+    "**/pubspec.lock": true,
+    "**/.pub-cache": true,
+    "**/.gradle": true
+  },
+  "dart.flutterSelectDeviceWhenConnected": true,
+  "dart.showTodos": true,
+  "dart.enableCompletionCommitCharacters": false,
+  "editor.rulers": [80],
+  "editor.wordWrap": "on",
+  "editor.wordWrapColumn": 80,
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "dart.previewFlutterUiGuides": true,
+  "dart.previewFlutterUiGuidesCustomTracking": true
+}
