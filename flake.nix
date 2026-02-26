@@ -217,6 +217,24 @@
             echo "Setting up Flutter 3.3.0 + Android dev environment..."
             
             export PATH="$FHS_LIB/usr/bin:$PATH"
+            
+            # CRITICAL: Fix CXXABI compatibility for nix and all tools
+            # Must be set BEFORE any shell or direnv initialization
+            # Collects ALL nix library paths to ensure proper C++ ABI compatibility
+            if [ -d "/nix/store" ]; then
+              for nix_lib_dir in $(ls -d /nix/store/*-nix-*/lib 2>/dev/null); do
+                if [ -d "$nix_lib_dir" ]; then
+                  export LD_LIBRARY_PATH="$nix_lib_dir:${LD_LIBRARY_PATH}"
+                fi
+              done
+              # Add gcc libs for CXXABI support
+              for gcc_lib_dir in $(ls -d /nix/store/*gcc*lib*/lib 2>/dev/null); do
+                if [ -d "$gcc_lib_dir" ]; then
+                  export LD_LIBRARY_PATH="$gcc_lib_dir:${LD_LIBRARY_PATH}"
+                fi
+              done
+            fi
+            
             export NIX_LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [
               pkgs.glibc
               pkgs.zlib
