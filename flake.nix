@@ -112,19 +112,19 @@
             echo ""
             echo "🛑 Checking for existing emulator instances..."
             
-            # Kill emulator processes more aggressively
-            pkill -9 -f "emulator" 2>/dev/null || true
-            pkill -9 "emulator" 2>/dev/null || true
+            # Kill emulator processes by name (avoid matching the wrapper script itself)
+            # Use pgrep to find only the actual emulator binary, not the shell script
+            pgrep -x emulator >/dev/null 2>&1 && pkill -9 -x emulator 2>/dev/null || true
             
             # Also kill qemu processes that might be running the emulator
-            pkill -9 -f "qemu" 2>/dev/null || true
+            pgrep -f "qemu-system" >/dev/null 2>&1 && pkill -9 -f "qemu-system" 2>/dev/null || true
             
             # Remove lock files that might prevent emulator from starting
             rm -f "$ANDROID_EMULATOR_HOME/android_emulator/emulator-user.ini.lock" 2>/dev/null || true
             rm -f "$ANDROID_EMULATOR_HOME/android_emulator/avd.lock" 2>/dev/null || true
             
             # Wait for processes to fully terminate
-            sleep 3
+            sleep 2
             
             echo "✅ Ready to start emulator"
 
