@@ -18,6 +18,7 @@
 *.ipr
 *.iws
 .idea/
+.android
 
 # Visual Studio Code related
 .classpath
@@ -144,3 +145,16 @@ app.*.symbols
 .nix-flutter/
 .gradle/
 .pub-cache/
+
+# Direnv cache and environment
+.direnv/
+.envrc.local
+
+# Generated environment files
+.flutter_env_ready
+.env.local
+
+# Test/temporary files
+test-flake.sh
+core.*
+*.swp
