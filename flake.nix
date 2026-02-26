@@ -202,6 +202,13 @@
           shellHook = ''
             echo "Setting up Flutter 3.3.0 + Android dev environment..."
             
+            # Setup Android environment FIRST (before Flutter commands)
+            export ANDROID_HOME="$PWD/.android/sdk"
+            export ANDROID_SDK_ROOT="$ANDROID_HOME"
+            export ANDROID_EMULATOR_HOME="$PWD/.android"
+            export FLUTTER_ANDROID_HOME="$ANDROID_HOME"
+            export JAVA_HOME="${pkgs.jdk17}"
+            
             # Setup Flutter as proper Git clone (only once)
             FLUTTER_HOME="$PWD/.flutter"
             FLUTTER_INIT_FILE="$FLUTTER_HOME/.init_done"
@@ -246,12 +253,10 @@
               echo "✅ Flutter 3.3.0 already configured"
             fi
             
-            # Setup Android environment (fast path - only check, don't recopy every time)
-            if [ ! -d "$PWD/.android/sdk" ]; then
+            # Setup Android SDK files (fast path - only check, don't recopy every time)
+            if [ ! -d "$ANDROID_HOME" ]; then
               echo "📦 Setting up Android SDK..."
-              mkdir -p "$PWD/.android/sdk"
-              export ANDROID_HOME="$PWD/.android/sdk"
-              export ANDROID_SDK_ROOT="$ANDROID_HOME"
+              mkdir -p "$ANDROID_HOME"
               cp -LR ${androidEnv}/share/android-sdk/* "$ANDROID_HOME/" 2>/dev/null || true
               
               for bin in adb avdmanager emulator sdkmanager; do
@@ -265,14 +270,7 @@
               
               chmod -R u+w "$ANDROID_HOME" 2>/dev/null || true
               echo "✅ Android SDK configured"
-            else
-              export ANDROID_HOME="$PWD/.android/sdk"
-              export ANDROID_SDK_ROOT="$ANDROID_HOME"
             fi
-
-            export JAVA_HOME="${pkgs.jdk17}"
-            export ANDROID_EMULATOR_HOME="$PWD/.android"
-            export FLUTTER_ANDROID_HOME="$ANDROID_HOME"
             
             echo "✅ Flutter 3.3.0 + Android dev environment ready"
           '';
@@ -349,6 +347,13 @@
             
             export PATH="$FHS_LIB/usr/bin:$PATH"
             
+            # Setup Android environment FIRST (before Flutter commands)
+            export ANDROID_HOME="$PWD/.android/sdk"
+            export ANDROID_SDK_ROOT="$ANDROID_HOME"
+            export ANDROID_EMULATOR_HOME="$PWD/.android"
+            export FLUTTER_ANDROID_HOME="$ANDROID_HOME"
+            export JAVA_HOME="${pkgs.jdk17}"
+            
             # Setup Flutter as proper Git clone (only once)
             FLUTTER_HOME="$PWD/.flutter"
             FLUTTER_INIT_FILE="$FLUTTER_HOME/.init_done"
@@ -422,12 +427,10 @@
 
             export LD_LIBRARY_PATH="$NIX_LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
 
-            # Setup Android environment (fast path - only check, don't recopy every time)
-            if [ ! -d "$PWD/.android/sdk" ]; then
+            # Setup Android SDK files (fast path - only check, don't recopy every time)
+            if [ ! -d "$ANDROID_HOME" ]; then
               echo "📦 Setting up Android SDK..."
-              mkdir -p "$PWD/.android/sdk"
-              export ANDROID_HOME="$PWD/.android/sdk"
-              export ANDROID_SDK_ROOT="$ANDROID_HOME"
+              mkdir -p "$ANDROID_HOME"
               cp -LR ${androidEnv}/share/android-sdk/* "$ANDROID_HOME/" 2>/dev/null || true
               
               for bin in adb avdmanager emulator sdkmanager; do
@@ -441,15 +444,9 @@
               
               chmod -R u+w "$ANDROID_HOME" 2>/dev/null || true
               echo "✅ Android SDK configured"
-            else
-              export ANDROID_HOME="$PWD/.android/sdk"
-              export ANDROID_SDK_ROOT="$ANDROID_HOME"
             fi
 
-            export JAVA_HOME="${pkgs.jdk17}"
             export PATH="${pkgs.cmake}/bin:${pkgs.ninja}/bin:$PATH"
-            export ANDROID_EMULATOR_HOME="$PWD/.android"
-            export FLUTTER_ANDROID_HOME="$ANDROID_HOME"
             export LD_LIBRARY_PATH="$FHS_LIB/usr/lib:$LD_LIBRARY_PATH"
             
             echo "✅ Flutter 3.3.0 + Android dev environment ready (FHS)"
