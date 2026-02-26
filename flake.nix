@@ -186,6 +186,10 @@
             FLUTTER_HOME="$PWD/.flutter"
             FLUTTER_INIT_FILE="$FLUTTER_HOME/.init_done"
             
+            # Export PATH early so flutter commands work
+            export PATH="$FLUTTER_HOME/bin:$PATH"
+            export FLUTTER_ROOT="$FLUTTER_HOME"
+            
             if [ ! -f "$FLUTTER_INIT_FILE" ]; then
               if [ ! -d "$FLUTTER_HOME/.git" ]; then
                 echo "🚀 Cloning Flutter 3.3.0 repository..."
@@ -203,21 +207,24 @@
               mkdir -p "$FLUTTER_HOME/bin/cache"
               echo "stable" > "$FLUTTER_HOME/bin/cache/.channel" 2>/dev/null || true
               
-              # Disable analytics and accept agreements (only once)
-              echo "⚙️  Configuring Flutter..."
-              flutter config --no-analytics 2>/dev/null || true
+              cd - > /dev/null
+              
+              # Download Flutter engine binaries and configure (only once)
+              echo "⚙️  Downloading Flutter engine binaries and configuring..."
+              flutter --version 2>&1 | head -3
+              
+              echo "⚙️  Disabling analytics..."
+              flutter config --no-analytics
+              
+              echo "⚙️  Accepting Flutter agreements..."
+              flutter config --enable-web 2>/dev/null || true
               
               # Mark initialization as done
               touch "$FLUTTER_INIT_FILE"
               echo "✅ Flutter initialization complete"
-              
-              cd - > /dev/null
             else
               echo "✅ Flutter 3.3.0 already configured"
             fi
-            
-            export PATH="$FLUTTER_HOME/bin:$PATH"
-            export FLUTTER_ROOT="$FLUTTER_HOME"
             
             # Setup Android environment (fast path - only check, don't recopy every time)
             if [ ! -d "$PWD/.android/sdk" ]; then
@@ -326,6 +333,10 @@
             FLUTTER_HOME="$PWD/.flutter"
             FLUTTER_INIT_FILE="$FLUTTER_HOME/.init_done"
             
+            # Export PATH early so flutter commands work
+            export PATH="$FLUTTER_HOME/bin:$PATH"
+            export FLUTTER_ROOT="$FLUTTER_HOME"
+            
             if [ ! -f "$FLUTTER_INIT_FILE" ]; then
               if [ ! -d "$FLUTTER_HOME/.git" ]; then
                 echo "🚀 Cloning Flutter 3.3.0 repository..."
@@ -343,21 +354,24 @@
               mkdir -p "$FLUTTER_HOME/bin/cache"
               echo "stable" > "$FLUTTER_HOME/bin/cache/.channel" 2>/dev/null || true
               
-              # Disable analytics and accept agreements (only once)
-              echo "⚙️  Configuring Flutter..."
-              flutter config --no-analytics 2>/dev/null || true
+              cd - > /dev/null
+              
+              # Download Flutter engine binaries and configure (only once)
+              echo "⚙️  Downloading Flutter engine binaries and configuring..."
+              flutter --version 2>&1 | head -3
+              
+              echo "⚙️  Disabling analytics..."
+              flutter config --no-analytics
+              
+              echo "⚙️  Accepting Flutter agreements..."
+              flutter config --enable-web 2>/dev/null || true
               
               # Mark initialization as done
               touch "$FLUTTER_INIT_FILE"
               echo "✅ Flutter initialization complete"
-              
-              cd - > /dev/null
             else
               echo "✅ Flutter 3.3.0 already configured"
             fi
-            
-            export PATH="$FLUTTER_HOME/bin:$PATH"
-            export FLUTTER_ROOT="$FLUTTER_HOME"
             
             export NIX_LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [
               pkgs.glibc
