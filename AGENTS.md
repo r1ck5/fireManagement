@@ -165,3 +165,14 @@ Before committing code:
 - [ ] No unused imports or variables
 - [ ] Error handling implemented
 - [ ] Types explicitly declared
+
+## Communication Guidelines for Agents
+
+Keep summaries **lean, objective, and factual**:
+- No success statistics, percentage counts, or verbose status descriptions
+- Avoid repetitive summaries listing what was already done
+- Skip unnecessary details about tool outputs or intermediate steps
+- Focus only on: what changed, why it matters, what needs attention next
+- Use concise bullet points (max 2-3 lines per item)
+- No excessive line counts or long text blocks unless essential for clarity
+- Omit verbose "done/completed/finished" statements—show action over narrative
