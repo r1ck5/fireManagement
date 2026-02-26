@@ -216,8 +216,8 @@
               echo "⚙️  Disabling analytics..."
               flutter config --no-analytics
               
-              echo "⚙️  Accepting Flutter agreements..."
-              flutter config --enable-web 2>/dev/null || true
+              echo "⚙️  Accepting Android licenses..."
+              yes | flutter doctor --android-licenses 2>/dev/null || true
               
               # Mark initialization as done
               touch "$FLUTTER_INIT_FILE"
@@ -363,8 +363,8 @@
               echo "⚙️  Disabling analytics..."
               flutter config --no-analytics
               
-              echo "⚙️  Accepting Flutter agreements..."
-              flutter config --enable-web 2>/dev/null || true
+              echo "⚙️  Accepting Android licenses..."
+              yes | flutter doctor --android-licenses 2>/dev/null || true
               
               # Mark initialization as done
               touch "$FLUTTER_INIT_FILE"
