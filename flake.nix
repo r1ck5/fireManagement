@@ -201,6 +201,7 @@
 
           shellHook = ''
             echo "Setting up Flutter 3.3.0 + Android dev environment..."
+            echo ""
             
             # Setup Android environment FIRST (before Flutter commands)
             export ANDROID_HOME="$PWD/.android/sdk"
@@ -219,9 +220,10 @@
             
             if [ ! -f "$FLUTTER_INIT_FILE" ]; then
               if [ ! -d "$FLUTTER_HOME/.git" ]; then
-                echo "🚀 Cloning Flutter 3.3.0 repository..."
+                echo "📥 Cloning Flutter 3.3.0 repository (this may take a moment)..."
                 git clone --depth 1 --branch 3.3.0 https://github.com/flutter/flutter.git "$FLUTTER_HOME" 2>&1 | grep -v "^Cloning into" || true
-                echo "✅ Flutter 3.3.0 cloned successfully"
+                echo "✅ Flutter 3.3.0 cloned"
+                echo ""
               fi
               
               # Configure git remotes and channels for Flutter (only once)
@@ -237,20 +239,25 @@
               cd - > /dev/null
               
               # Download Flutter engine binaries and configure (only once)
-              echo "⚙️  Downloading Flutter engine binaries and configuring..."
+              echo "⏳ Downloading Flutter engine binaries (this takes 1-2 minutes)..."
               flutter --version 2>&1 | head -3
+              echo ""
               
               echo "⚙️  Disabling analytics..."
               flutter config --no-analytics
+              echo ""
               
-              echo "⚙️  Accepting Android licenses..."
+              echo "📋 Accepting Android SDK licenses..."
               yes | flutter doctor --android-licenses 2>/dev/null || true
+              echo ""
               
               # Mark initialization as done
               touch "$FLUTTER_INIT_FILE"
               echo "✅ Flutter initialization complete"
+              echo ""
             else
-              echo "✅ Flutter 3.3.0 already configured"
+              echo "✅ Flutter 3.3.0 ready"
+              echo ""
             fi
             
             # Setup Android SDK files (fast path - only check, don't recopy every time)
@@ -269,10 +276,11 @@
               done
               
               chmod -R u+w "$ANDROID_HOME" 2>/dev/null || true
-              echo "✅ Android SDK configured"
+              echo "✅ Android SDK ready"
+              echo ""
             fi
             
-            echo "✅ Flutter 3.3.0 + Android dev environment ready"
+            echo "🎉 Environment ready! Run 'flutter doctor' to verify setup."
           '';
         };
 
@@ -344,6 +352,7 @@
 
           profile = ''
             echo "Setting up Flutter 3.3.0 + Android dev environment (FHS)..."
+            echo ""
             
             export PATH="$FHS_LIB/usr/bin:$PATH"
             
@@ -364,9 +373,10 @@
             
             if [ ! -f "$FLUTTER_INIT_FILE" ]; then
               if [ ! -d "$FLUTTER_HOME/.git" ]; then
-                echo "🚀 Cloning Flutter 3.3.0 repository..."
+                echo "📥 Cloning Flutter 3.3.0 repository (this may take a moment)..."
                 git clone --depth 1 --branch 3.3.0 https://github.com/flutter/flutter.git "$FLUTTER_HOME" 2>&1 | grep -v "^Cloning into" || true
-                echo "✅ Flutter 3.3.0 cloned successfully"
+                echo "✅ Flutter 3.3.0 cloned"
+                echo ""
               fi
               
               # Configure git remotes and channels for Flutter (only once)
@@ -382,20 +392,25 @@
               cd - > /dev/null
               
               # Download Flutter engine binaries and configure (only once)
-              echo "⚙️  Downloading Flutter engine binaries and configuring..."
+              echo "⏳ Downloading Flutter engine binaries (this takes 1-2 minutes)..."
               flutter --version 2>&1 | head -3
+              echo ""
               
               echo "⚙️  Disabling analytics..."
               flutter config --no-analytics
+              echo ""
               
-              echo "⚙️  Accepting Android licenses..."
+              echo "📋 Accepting Android SDK licenses..."
               yes | flutter doctor --android-licenses 2>/dev/null || true
+              echo ""
               
               # Mark initialization as done
               touch "$FLUTTER_INIT_FILE"
               echo "✅ Flutter initialization complete"
+              echo ""
             else
-              echo "✅ Flutter 3.3.0 already configured"
+              echo "✅ Flutter 3.3.0 ready"
+              echo ""
             fi
             
             export NIX_LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [
@@ -443,13 +458,14 @@
               done
               
               chmod -R u+w "$ANDROID_HOME" 2>/dev/null || true
-              echo "✅ Android SDK configured"
+              echo "✅ Android SDK ready"
+              echo ""
             fi
 
             export PATH="${pkgs.cmake}/bin:${pkgs.ninja}/bin:$PATH"
             export LD_LIBRARY_PATH="$FHS_LIB/usr/lib:$LD_LIBRARY_PATH"
             
-            echo "✅ Flutter 3.3.0 + Android dev environment ready (FHS)"
+            echo "🎉 Environment ready! Run 'flutter doctor' to verify setup."
           '';
           runScript = "bash";
         }).env;
