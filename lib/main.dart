@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map_arcgis/flutter_map_arcgis.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_arcgis_example/Routes.dart';
 import 'package:flutter_map_arcgis_example/mainBindings.dart';
 import 'package:flutter_map_arcgis_example/screens/mainScreen.dart';
 import 'package:get/get_navigation/get_navigation.dart';
-import 'package:latlong2/latlong.dart';
 
 void main() => runApp(MyApp());
 

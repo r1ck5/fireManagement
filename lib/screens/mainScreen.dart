@@ -2,22 +2,18 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_map_arcgis/flutter_map_arcgis.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_arcgis_example/controllers/alarm_ctrl.dart';
 import 'package:flutter_map_arcgis_example/controllers/report_ctrl.dart';
 import 'package:flutter_map_arcgis_example/widgets/alarm_Widget.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:rxdart/rxdart.dart';
 import '../Image_Paths.dart';
 import '../Routes.dart';
 import '../api/fire_management_api.dart';
 import '../api/weather_api.dart';
-import '../controllers/map_ctrl.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);

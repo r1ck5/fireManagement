@@ -1,11 +1,8 @@
 
 import 'dart:convert';
 
-import 'package:csv/csv.dart';
 import 'package:flutter_map_arcgis_example/models/wind_direction.dart';
-import 'package:http/http.dart' as http;
 
-import '../models/viirs.dart';
 import '../models/wind_speed.dart';
 import 'fire_management_api.dart';
 

@@ -1,6 +1,6 @@
 {
   "dart.sdkPath": "/home/krs/.flutter/bin/cache/dart-sdk",
-  "dart.flutterSdkPath": "/home/krs/.flutter",
+  "dart.flutterSdkPath": ".fvm/versions/3.3.0",
   "dart.lineLength": 80,
   "dart.enableSdkFormatter": true,
   "editor.formatOnSave": true,
@@ -29,10 +29,13 @@
   "dart.flutterSelectDeviceWhenConnected": true,
   "dart.showTodos": true,
   "dart.enableCompletionCommitCharacters": false,
-  "editor.rulers": [80],
+  "editor.rulers": [
+    80
+  ],
   "editor.wordWrap": "on",
   "editor.wordWrapColumn": 80,
   "terminal.integrated.defaultProfile.linux": "zsh",
   "dart.previewFlutterUiGuides": true,
-  "dart.previewFlutterUiGuidesCustomTracking": true
+  "dart.previewFlutterUiGuidesCustomTracking": true,
+  "java.configuration.updateBuildConfiguration": "interactive"
 }

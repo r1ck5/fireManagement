@@ -1,9 +1,8 @@
 {
-  description = "Flutter 3.3.0 Fire Management App - Legacy Development Environment";
+  description = "Flutter 3.3.0 Fire Management App - Fully Isolated Nix Dev Environment";
 
   inputs = {
-    # Pin to a stable nixpkgs version that supports Flutter 3.3.0
-    # 23.11 is a solid LTS release with good Flutter support
+    # Pin to a stable nixpkgs version
     nixpkgs.url = "github:nixos/nixpkgs/23.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
@@ -18,6 +17,34 @@
             allowBroken = false;
           };
         };
+
+        # ============================================================
+        # Flutter 3.3.0 - Managed entirely in Nix
+        # ============================================================
+        flutter-3-3-0 = pkgs.stdenv.mkDerivation {
+          pname = "flutter";
+          version = "3.3.0";
+          
+          src = pkgs.fetchurl {
+            url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.3.0-stable.tar.xz";
+            sha256 = "a92a27aa6d4454d7a1cf9f8a0a56e0e5d6865f2cfcd21cf52e57f7922ad5d504";
+          };
+          
+          nativeBuildInputs = with pkgs; [ gnutar xz ];
+          
+          unpackPhase = ''
+            mkdir -p $out
+            tar -xf $src -C $out --strip-components=1
+          '';
+          
+          dontBuild = true;
+          dontFixup = true;
+          
+          installPhase = ''
+            # Flutter is already unpacked to $out by unpackPhase
+            mkdir -p $out/bin
+          '';
+        };
       in
       {
         devShells.default = pkgs.mkShell {
@@ -25,9 +52,13 @@
 
           buildInputs = with pkgs; [
             # ============================================================
+            # Flutter (fully managed by Nix - isolated in /nix/store)
+            # ============================================================
+            flutter-3-3-0
+
+            # ============================================================
             # Java Development Kit
             # ============================================================
-            # JDK 11 is compatible with Flutter 3.3.0 and older Gradle
             jdk11
 
             # ============================================================
@@ -61,7 +92,7 @@
             nano
 
             # ============================================================
-            # System Libraries (may be needed for compilation)
+            # System Libraries
             # ============================================================
             llvm
             libclang
@@ -70,6 +101,25 @@
 
           shellHook = ''
             set +e  # Don't exit on error in this hook
+
+            # ============================================================
+            # Flutter Configuration (from Nix store - local copy for writability)
+            # ============================================================
+            # Flutter needs a writable directory for cache and git operations
+            export FLUTTER_ROOT="$PWD/.nix-flutter"
+            
+            # Create a local copy of Flutter on first run
+            if [ ! -d "$FLUTTER_ROOT" ]; then
+              echo "📋 Initializing Flutter from Nix store (first run - this may take a moment)..."
+              cp -r "${flutter-3-3-0}" "$FLUTTER_ROOT"
+              chmod -R u+w "$FLUTTER_ROOT"
+            fi
+            
+            export PATH=$FLUTTER_ROOT/bin:$PATH
+            export PATH=$FLUTTER_ROOT/bin/cache/dart-sdk/bin:$PATH
+            export PUB_CACHE=$PWD/.pub-cache
+            export FLUTTER_NO_ANALYTICS=true
+            export FLUTTER_SUPPRESS_ANALYTICS=true
 
             # ============================================================
             # Java Configuration
@@ -90,20 +140,6 @@
             export PATH=$ANDROID_SDK_ROOT/tools/bin:$PATH
             export PATH=$ANDROID_SDK_ROOT/platform-tools:$PATH
             export PATH=$ANDROID_SDK_ROOT/build-tools/33.0.0:$PATH
-
-            # ============================================================
-            # Flutter Configuration
-            # ============================================================
-            export PUB_CACHE=$PWD/.pub-cache
-            export FLUTTER_NO_ANALYTICS=true
-            export FLUTTER_SUPPRESS_ANALYTICS=true
-            
-            # Use system Flutter if available
-            if [ -d "$HOME/.flutter" ]; then
-              export FLUTTER_ROOT=$HOME/.flutter
-              export PATH=$FLUTTER_ROOT/bin:$PATH
-              export PATH=$FLUTTER_ROOT/bin/cache/dart-sdk/bin:$PATH
-            fi
 
             # ============================================================
             # Gradle Configuration
@@ -132,9 +168,18 @@
             echo "╔════════════════════════════════════════════════════════════╗"
             echo "║  Flutter 3.3.0 Fire Management App - Nix Dev Environment  ║"
             echo "║  System: ${system}                           "
+            echo "║  All tools isolated in: /nix/store                        ║"
             echo "╚════════════════════════════════════════════════════════════╝"
             echo ""
             
+            # Check Flutter
+            echo "📦 Flutter Configuration:"
+            flutter_version=$($FLUTTER_ROOT/bin/flutter --version 2>&1 | head -1)
+            echo "   $flutter_version"
+            dart_version=$($FLUTTER_ROOT/bin/dart --version 2>&1)
+            echo "   Dart: $dart_version"
+            echo ""
+
             # Check Java
             echo "📦 Java Configuration:"
             java_version=$(java -version 2>&1 | head -1)
@@ -149,21 +194,9 @@
             echo "   Ninja: $(ninja --version 2>&1)"
             echo ""
 
-            # Check Flutter
-            echo "📦 Flutter Configuration:"
-            if [ -d "$FLUTTER_ROOT" ]; then
-              flutter_version=$($FLUTTER_ROOT/bin/flutter --version 2>&1 | head -1)
-              echo "   $flutter_version"
-              dart_version=$($FLUTTER_ROOT/bin/dart --version 2>&1)
-              echo "   Dart: $dart_version"
-            else
-              echo "   ⚠️  Flutter not found at ~/.flutter"
-              echo "   Install Flutter 3.3.0 from: https://flutter.dev/docs/release/archive"
-            fi
-            echo ""
-
             # Show important paths
-            echo "📂 Important Paths:"
+            echo "📂 Important Paths (all isolated in /nix/store):"
+            echo "   FLUTTER_ROOT: $FLUTTER_ROOT"
             echo "   JAVA_HOME: $JAVA_HOME"
             echo "   ANDROID_HOME: $ANDROID_HOME"
             echo "   PUB_CACHE: $PUB_CACHE"

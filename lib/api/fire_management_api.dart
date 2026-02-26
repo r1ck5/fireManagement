@@ -1,7 +1,5 @@
 import 'dart:convert';
-import 'dart:developer';
 
-import 'package:csv/csv.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/viirs.dart';
