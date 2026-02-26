@@ -95,20 +95,30 @@
           export QTWEBENGINE_DISABLE_SANDBOX=1
 
            # Detect graphics capability and choose rendering mode
-           echo ""
-           echo "📊 Graphics configuration..."
-           
-           # Check if hardware GPU is requested via command line argument
-           if [ "$1" = "--gpu" ] || [ "$1" = "-gpu" ]; then
-             echo "   ℹ️  Hardware GPU requested via command line"
-             GPU_MODE="-gpu host"
-           else
-             echo "   ℹ️  Using software rendering (more reliable on NixOS)"
-             echo "   💡 Tip: Run 'run-emulator --gpu' to attempt hardware rendering"
-             GPU_MODE="-gpu swiftshader_indirect"
-           fi
+            echo ""
+            echo "📊 Graphics configuration..."
+            
+            # Check if hardware GPU is requested via command line argument
+            if [ "$1" = "--gpu" ] || [ "$1" = "-gpu" ]; then
+              echo "   ℹ️  Hardware GPU requested via command line"
+              GPU_MODE="-gpu host"
+            else
+              echo "   ℹ️  Using software rendering (more reliable on NixOS)"
+              echo "   💡 Tip: Run 'run-emulator --gpu' to attempt hardware rendering"
+              GPU_MODE="-gpu swiftshader_indirect"
+            fi
 
-          echo ""
+            # Kill any existing emulator instances before starting
+            echo ""
+            echo "🛑 Checking for existing emulator instances..."
+            pkill -f "emulator -avd android_emulator" 2>/dev/null || true
+            
+            # Wait a moment for the process to fully terminate
+            sleep 2
+            
+            echo "✅ Ready to start emulator"
+
+           echo ""
           echo "🚀 Starting emulator with $GPU_MODE..."
           echo ""
 
