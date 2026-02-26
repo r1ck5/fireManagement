@@ -8,13 +8,9 @@
       url = "github:tadfisher/android-nixpkgs/main";
       flake = false;
     };
-    flutter-src = {
-      url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.3.0-stable.tar.xz";
-      flake = false;
-    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, android-nixpkgs-src, flutter-src }:
+  outputs = { self, nixpkgs, flake-utils, android-nixpkgs-src }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -127,67 +123,32 @@
             -no-metrics 2>&1
         '';
 
-        # Clean Flutter archive by removing .git directory
-        flutterArchiveClean = pkgs.runCommand "flutter-3.3.0-clean.tar.xz" { 
-          buildInputs = with pkgs; [ xz tar gnutar ];
-          preferLocalBuild = true;
-          allowSubstitutes = false;
-        } ''
-          mkdir -p work
-          cd work
+        # Flutter 3.3.0 as a proper Git clone (required by Flutter tools)
+        setupFlutter = pkgs.writeShellScriptBin "setup-flutter" ''
+          #!/usr/bin/env bash
+          set -e
           
-          # Decompress archive
-          xz -d -c ${flutter-src} | tar -x --warning=no-unknown-keyword
+          FLUTTER_HOME="$PWD/.flutter"
           
-          # Remove all .git* files and directories that cause Nix issues
-          find . -name ".git" -type d -print0 | xargs -0 rm -rf 2>/dev/null || true
-          find . -name ".git*" -type f -delete 2>/dev/null || true
-          find . -name ".gitignore" -delete 2>/dev/null || true
-          find . -name ".gitattributes" -delete 2>/dev/null || true
+          if [ ! -d "$FLUTTER_HOME" ]; then
+            echo "🚀 Cloning Flutter 3.3.0 repository..."
+            git clone --depth 1 --branch 3.3.0 https://github.com/flutter/flutter.git "$FLUTTER_HOME"
+          else
+            echo "✅ Flutter already cloned at $FLUTTER_HOME"
+          fi
           
-          # Remove other potentially problematic hidden files
-          find . -name "._*" -delete 2>/dev/null || true
-          find . -name ".DS_Store" -delete 2>/dev/null || true
+          # Verify it's a proper git clone
+          if [ ! -d "$FLUTTER_HOME/.git" ]; then
+            echo "❌ ERROR: Flutter clone is missing .git directory"
+            exit 1
+          fi
           
-          # Repack the archive for use by derivation
-          tar -c . --warning=no-unknown-keyword | xz -9 -T 0 > $out
+          export PATH="$FLUTTER_HOME/bin:$PATH"
+          export FLUTTER_ROOT="$FLUTTER_HOME"
+          echo "✅ Flutter 3.3.0 path configured"
         '';
         
-        # Flutter 3.3.0 from cleaned archive
-        flutter330 = pkgs.stdenv.mkDerivation rec {
-          pname = "flutter";
-          version = "3.3.0";
-          src = flutterArchiveClean;
-          
-          buildInputs = [ pkgs.tar pkgs.xz ];
-          
-          unpackPhase = ''
-            tar -xf $src --strip-components=1 --warning=no-unknown-keyword 2>/dev/null || \
-            tar -xf $src --strip-components=1 2>/dev/null || true
-          '';
-          
-          dontBuild = true;
-          dontConfigure = true;
-          
-          installPhase = ''
-            # Make all scripts executable
-            find . -type f -name "*.sh" 2>/dev/null | while read f; do
-              chmod +x "$f" 2>/dev/null || true
-            done
-            
-            for executable in bin/flutter bin/dart; do
-              if [ -f "$executable" ]; then
-                chmod +x "$executable"
-              fi
-            done
-            
-            # Ensure bin directory exists and is accessible
-            mkdir -p bin
-            chmod +rx bin || true
-          '';
-        };
-        
-        patchedFlutter = flutter330;
+        patchedFlutter = pkgs.flutter;
 
         # Build version constraints for Flutter 3.3.0
         minSdkVersion = "21";
@@ -209,6 +170,7 @@
             jdk17
             gradle
             patchedFlutter
+            setupFlutter
             wrappedEmulator
             androidEnv
             glibc
@@ -219,6 +181,34 @@
 
           shellHook = ''
             echo "Setting up Flutter 3.3.0 + Android dev environment..."
+            
+            # Setup Flutter as proper Git clone
+            FLUTTER_HOME="$PWD/.flutter"
+            if [ ! -d "$FLUTTER_HOME/.git" ]; then
+              echo "🚀 Cloning Flutter 3.3.0 repository..."
+              git clone --depth 1 --branch 3.3.0 https://github.com/flutter/flutter.git "$FLUTTER_HOME" 2>&1 | grep -v "^Cloning into" || true
+              echo "✅ Flutter 3.3.0 cloned successfully"
+            else
+              echo "✅ Flutter 3.3.0 already cloned"
+            fi
+            
+            # Configure git remotes and channels for Flutter
+            cd "$FLUTTER_HOME"
+            git remote set-url origin https://github.com/flutter/flutter.git 2>/dev/null || true
+            git config user.email "flutter@local" 2>/dev/null || true
+            git config user.name "Flutter Dev" 2>/dev/null || true
+            
+            # Create .channel file to indicate stable channel
+            echo "stable" > "$FLUTTER_HOME/bin/cache/.channel" 2>/dev/null || true
+            
+            cd - > /dev/null
+            
+            export PATH="$FLUTTER_HOME/bin:$PATH"
+            export FLUTTER_ROOT="$FLUTTER_HOME"
+            
+            # Disable analytics and accept agreements
+            flutter config --no-analytics 2>/dev/null || true
+            flutter --version 2>/dev/null || true
             
             # Setup Android environment
             if [ -d "$PWD/.android/sdk" ]; then
@@ -246,7 +236,7 @@
             export ANDROID_EMULATOR_HOME="$PWD/.android"
             export FLUTTER_ANDROID_HOME="$ANDROID_HOME"
             
-            echo "✅ Flutter 3.3.0 + Android dev environment ready (fast path)"
+            echo "✅ Flutter 3.3.0 + Android dev environment ready"
           '';
         };
 
@@ -320,6 +310,34 @@
             echo "Setting up Flutter 3.3.0 + Android dev environment (FHS)..."
             
             export PATH="$FHS_LIB/usr/bin:$PATH"
+            
+            # Setup Flutter as proper Git clone
+            FLUTTER_HOME="$PWD/.flutter"
+            if [ ! -d "$FLUTTER_HOME/.git" ]; then
+              echo "🚀 Cloning Flutter 3.3.0 repository..."
+              git clone --depth 1 --branch 3.3.0 https://github.com/flutter/flutter.git "$FLUTTER_HOME" 2>&1 | grep -v "^Cloning into" || true
+              echo "✅ Flutter 3.3.0 cloned successfully"
+            else
+              echo "✅ Flutter 3.3.0 already cloned"
+            fi
+            
+            # Configure git remotes and channels for Flutter
+            cd "$FLUTTER_HOME"
+            git remote set-url origin https://github.com/flutter/flutter.git 2>/dev/null || true
+            git config user.email "flutter@local" 2>/dev/null || true
+            git config user.name "Flutter Dev" 2>/dev/null || true
+            
+            # Create .channel file to indicate stable channel
+            echo "stable" > "$FLUTTER_HOME/bin/cache/.channel" 2>/dev/null || true
+            
+            cd - > /dev/null
+            
+            export PATH="$FLUTTER_HOME/bin:$PATH"
+            export FLUTTER_ROOT="$FLUTTER_HOME"
+            
+            # Disable analytics and accept agreements
+            flutter config --no-analytics 2>/dev/null || true
+            flutter --version 2>/dev/null || true
             
             export NIX_LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [
               pkgs.glibc
