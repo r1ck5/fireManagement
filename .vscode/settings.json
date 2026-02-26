@@ -1,6 +1,6 @@
 {
-  "dart.sdkPath": "/home/krs/.flutter/bin/cache/dart-sdk",
-  "dart.flutterSdkPath": ".fvm/versions/3.3.0",
+  "dart.sdkPath": ".nix-flutter/bin/cache/dart-sdk",
+  "dart.flutterSdkPath": ".nix-flutter",
   "dart.lineLength": 80,
   "dart.enableSdkFormatter": true,
   "editor.formatOnSave": true,
@@ -17,14 +17,16 @@
     "**/pubspec.lock": true,
     "**/.pub-cache": true,
     "**/.gradle": true,
-    "**/android/.gradle": true
+    "**/android/.gradle": true,
+    ".nix-flutter": true
   },
   "files.exclude": {
     "**/.dart_tool": true,
     "**/build": true,
     "**/pubspec.lock": true,
     "**/.pub-cache": true,
-    "**/.gradle": true
+    "**/.gradle": true,
+    ".nix-flutter": true
   },
   "dart.flutterSelectDeviceWhenConnected": true,
   "dart.showTodos": true,
@@ -37,5 +39,8 @@
   "terminal.integrated.defaultProfile.linux": "zsh",
   "dart.previewFlutterUiGuides": true,
   "dart.previewFlutterUiGuidesCustomTracking": true,
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "terminal.integrated.env.linux": {
+    "DIRENV_LOG_FORMAT": ""
+  }
 }
