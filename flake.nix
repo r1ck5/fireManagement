@@ -127,15 +127,31 @@
             -no-metrics 2>&1
         '';
 
-        # Flutter 3.3.0 from official archive
+        # Clean Flutter archive by removing .git directory
+        flutterArchiveClean = pkgs.runCommand "flutter-3.3.0-clean.tar.xz" { 
+          buildInputs = [ pkgs.xz ];
+        } ''
+          mkdir -p work
+          cd work
+          xz -d < ${flutter-src} | tar -x
+          
+          # Remove all .git* files and directories
+          find . -name ".git" -type d -exec rm -rf {} + 2>/dev/null || true
+          find . -name ".git*" -type f -delete 2>/dev/null || true
+          find . -name ".gitignore" -delete 2>/dev/null || true
+          find . -name ".gitattributes" -delete 2>/dev/null || true
+          
+          # Repack the archive
+          tar -c . | xz -9 > $out
+        '';
+        
+        # Flutter 3.3.0 from cleaned archive
         flutter330 = pkgs.stdenv.mkDerivation rec {
           pname = "flutter";
           version = "3.3.0";
-          src = flutter-src;
+          src = flutterArchiveClean;
           
           unpackPhase = ''
-            mkdir -p $out
-            cd $out
             tar -xf $src --strip-components=1
           '';
           
@@ -144,13 +160,12 @@
           
           installPhase = ''
             # Make all scripts executable
-            find . -name "*.sh" -exec chmod +x {} \;
-            chmod +x bin/flutter
-          '';
-          
-          postInstall = ''
-            # Create the Flutter bin symlink structure
-            mkdir -p $out/bin
+            find . -type f -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+            [ -f bin/flutter ] && chmod +x bin/flutter || true
+            [ -f bin/dart ] && chmod +x bin/dart || true
+            
+            # Ensure bin directory exists
+            mkdir -p bin
           '';
         };
         
