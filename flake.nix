@@ -119,6 +119,10 @@
             # Also kill qemu processes that might be running the emulator
             pkill -9 -f "qemu" 2>/dev/null || true
             
+            # Remove lock files that might prevent emulator from starting
+            rm -f "$ANDROID_EMULATOR_HOME/android_emulator/emulator-user.ini.lock" 2>/dev/null || true
+            rm -f "$ANDROID_EMULATOR_HOME/android_emulator/avd.lock" 2>/dev/null || true
+            
             # Wait for processes to fully terminate
             sleep 3
             
