@@ -182,39 +182,46 @@
           shellHook = ''
             echo "Setting up Flutter 3.3.0 + Android dev environment..."
             
-            # Setup Flutter as proper Git clone
+            # Setup Flutter as proper Git clone (only once)
             FLUTTER_HOME="$PWD/.flutter"
-            if [ ! -d "$FLUTTER_HOME/.git" ]; then
-              echo "🚀 Cloning Flutter 3.3.0 repository..."
-              git clone --depth 1 --branch 3.3.0 https://github.com/flutter/flutter.git "$FLUTTER_HOME" 2>&1 | grep -v "^Cloning into" || true
-              echo "✅ Flutter 3.3.0 cloned successfully"
+            FLUTTER_INIT_FILE="$FLUTTER_HOME/.init_done"
+            
+            if [ ! -f "$FLUTTER_INIT_FILE" ]; then
+              if [ ! -d "$FLUTTER_HOME/.git" ]; then
+                echo "🚀 Cloning Flutter 3.3.0 repository..."
+                git clone --depth 1 --branch 3.3.0 https://github.com/flutter/flutter.git "$FLUTTER_HOME" 2>&1 | grep -v "^Cloning into" || true
+                echo "✅ Flutter 3.3.0 cloned successfully"
+              fi
+              
+              # Configure git remotes and channels for Flutter (only once)
+              cd "$FLUTTER_HOME"
+              git remote set-url origin https://github.com/flutter/flutter.git 2>/dev/null || true
+              git config user.email "flutter@local" 2>/dev/null || true
+              git config user.name "Flutter Dev" 2>/dev/null || true
+              
+              # Create .channel file to indicate stable channel
+              mkdir -p "$FLUTTER_HOME/bin/cache"
+              echo "stable" > "$FLUTTER_HOME/bin/cache/.channel" 2>/dev/null || true
+              
+              # Disable analytics and accept agreements (only once)
+              echo "⚙️  Configuring Flutter..."
+              flutter config --no-analytics 2>/dev/null || true
+              
+              # Mark initialization as done
+              touch "$FLUTTER_INIT_FILE"
+              echo "✅ Flutter initialization complete"
+              
+              cd - > /dev/null
             else
-              echo "✅ Flutter 3.3.0 already cloned"
+              echo "✅ Flutter 3.3.0 already configured"
             fi
-            
-            # Configure git remotes and channels for Flutter
-            cd "$FLUTTER_HOME"
-            git remote set-url origin https://github.com/flutter/flutter.git 2>/dev/null || true
-            git config user.email "flutter@local" 2>/dev/null || true
-            git config user.name "Flutter Dev" 2>/dev/null || true
-            
-            # Create .channel file to indicate stable channel
-            echo "stable" > "$FLUTTER_HOME/bin/cache/.channel" 2>/dev/null || true
-            
-            cd - > /dev/null
             
             export PATH="$FLUTTER_HOME/bin:$PATH"
             export FLUTTER_ROOT="$FLUTTER_HOME"
             
-            # Disable analytics and accept agreements
-            flutter config --no-analytics 2>/dev/null || true
-            flutter --version 2>/dev/null || true
-            
-            # Setup Android environment
-            if [ -d "$PWD/.android/sdk" ]; then
-              export ANDROID_HOME="$PWD/.android/sdk"
-              export ANDROID_SDK_ROOT="$ANDROID_HOME"
-            else
+            # Setup Android environment (fast path - only check, don't recopy every time)
+            if [ ! -d "$PWD/.android/sdk" ]; then
+              echo "📦 Setting up Android SDK..."
               mkdir -p "$PWD/.android/sdk"
               export ANDROID_HOME="$PWD/.android/sdk"
               export ANDROID_SDK_ROOT="$ANDROID_HOME"
@@ -230,6 +237,10 @@
               done
               
               chmod -R u+w "$ANDROID_HOME" 2>/dev/null || true
+              echo "✅ Android SDK configured"
+            else
+              export ANDROID_HOME="$PWD/.android/sdk"
+              export ANDROID_SDK_ROOT="$ANDROID_HOME"
             fi
 
             export JAVA_HOME="${pkgs.jdk17}"
@@ -311,33 +322,42 @@
             
             export PATH="$FHS_LIB/usr/bin:$PATH"
             
-            # Setup Flutter as proper Git clone
+            # Setup Flutter as proper Git clone (only once)
             FLUTTER_HOME="$PWD/.flutter"
-            if [ ! -d "$FLUTTER_HOME/.git" ]; then
-              echo "🚀 Cloning Flutter 3.3.0 repository..."
-              git clone --depth 1 --branch 3.3.0 https://github.com/flutter/flutter.git "$FLUTTER_HOME" 2>&1 | grep -v "^Cloning into" || true
-              echo "✅ Flutter 3.3.0 cloned successfully"
+            FLUTTER_INIT_FILE="$FLUTTER_HOME/.init_done"
+            
+            if [ ! -f "$FLUTTER_INIT_FILE" ]; then
+              if [ ! -d "$FLUTTER_HOME/.git" ]; then
+                echo "🚀 Cloning Flutter 3.3.0 repository..."
+                git clone --depth 1 --branch 3.3.0 https://github.com/flutter/flutter.git "$FLUTTER_HOME" 2>&1 | grep -v "^Cloning into" || true
+                echo "✅ Flutter 3.3.0 cloned successfully"
+              fi
+              
+              # Configure git remotes and channels for Flutter (only once)
+              cd "$FLUTTER_HOME"
+              git remote set-url origin https://github.com/flutter/flutter.git 2>/dev/null || true
+              git config user.email "flutter@local" 2>/dev/null || true
+              git config user.name "Flutter Dev" 2>/dev/null || true
+              
+              # Create .channel file to indicate stable channel
+              mkdir -p "$FLUTTER_HOME/bin/cache"
+              echo "stable" > "$FLUTTER_HOME/bin/cache/.channel" 2>/dev/null || true
+              
+              # Disable analytics and accept agreements (only once)
+              echo "⚙️  Configuring Flutter..."
+              flutter config --no-analytics 2>/dev/null || true
+              
+              # Mark initialization as done
+              touch "$FLUTTER_INIT_FILE"
+              echo "✅ Flutter initialization complete"
+              
+              cd - > /dev/null
             else
-              echo "✅ Flutter 3.3.0 already cloned"
+              echo "✅ Flutter 3.3.0 already configured"
             fi
-            
-            # Configure git remotes and channels for Flutter
-            cd "$FLUTTER_HOME"
-            git remote set-url origin https://github.com/flutter/flutter.git 2>/dev/null || true
-            git config user.email "flutter@local" 2>/dev/null || true
-            git config user.name "Flutter Dev" 2>/dev/null || true
-            
-            # Create .channel file to indicate stable channel
-            echo "stable" > "$FLUTTER_HOME/bin/cache/.channel" 2>/dev/null || true
-            
-            cd - > /dev/null
             
             export PATH="$FLUTTER_HOME/bin:$PATH"
             export FLUTTER_ROOT="$FLUTTER_HOME"
-            
-            # Disable analytics and accept agreements
-            flutter config --no-analytics 2>/dev/null || true
-            flutter --version 2>/dev/null || true
             
             export NIX_LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [
               pkgs.glibc
@@ -368,11 +388,9 @@
 
             export LD_LIBRARY_PATH="$NIX_LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
 
-            # Setup Android environment
-            if [ -d "$PWD/.android/sdk" ]; then
-              export ANDROID_HOME="$PWD/.android/sdk"
-              export ANDROID_SDK_ROOT="$ANDROID_HOME"
-            else
+            # Setup Android environment (fast path - only check, don't recopy every time)
+            if [ ! -d "$PWD/.android/sdk" ]; then
+              echo "📦 Setting up Android SDK..."
               mkdir -p "$PWD/.android/sdk"
               export ANDROID_HOME="$PWD/.android/sdk"
               export ANDROID_SDK_ROOT="$ANDROID_HOME"
@@ -388,6 +406,10 @@
               done
               
               chmod -R u+w "$ANDROID_HOME" 2>/dev/null || true
+              echo "✅ Android SDK configured"
+            else
+              export ANDROID_HOME="$PWD/.android/sdk"
+              export ANDROID_SDK_ROOT="$ANDROID_HOME"
             fi
 
             export JAVA_HOME="${pkgs.jdk17}"
