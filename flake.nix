@@ -8,9 +8,13 @@
       url = "github:tadfisher/android-nixpkgs/main";
       flake = false;
     };
+    flutter-src = {
+      url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.3.0-stable.tar.xz";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, android-nixpkgs-src }:
+  outputs = { self, nixpkgs, flake-utils, android-nixpkgs-src, flutter-src }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -94,23 +98,19 @@
           export QT_PLUGIN_PATH="${pkgs.qt6.qtbase}/lib/qt-6/plugins"
           export QTWEBENGINE_DISABLE_SANDBOX=1
 
-          # Detect graphics capability and choose rendering mode
-          echo ""
-          echo "📊 Graphics configuration..."
-          
-          # Try to detect if we can do hardware rendering
-          # Most NixOS systems need software rendering due to Vulkan driver issues
-          if [ -f "/run/opengl-driver/lib/libvulkan.so" ] || [ -f "/run/opengl-driver/lib/libvulkan.so.1" ]; then
-            echo "   ℹ️  NVIDIA driver detected, attempting hardware rendering"
-            GPU_MODE="-gpu host"
-          elif lspci 2>/dev/null | grep -q "VGA\|3D"; then
-            # Check if hardware is present (but still might not work due to Vulkan issues)
-            echo "   ℹ️  Graphics card detected, attempting hardware rendering"
-            GPU_MODE="-gpu host"
-          else
-            echo "   ℹ️  Using software rendering (slower but more compatible)"
-            GPU_MODE="-gpu swiftshader_indirect"
-          fi
+           # Detect graphics capability and choose rendering mode
+           echo ""
+           echo "📊 Graphics configuration..."
+           
+           # Check if hardware GPU is requested via command line argument
+           if [ "$1" = "--gpu" ] || [ "$1" = "-gpu" ]; then
+             echo "   ℹ️  Hardware GPU requested via command line"
+             GPU_MODE="-gpu host"
+           else
+             echo "   ℹ️  Using software rendering (more reliable on NixOS)"
+             echo "   💡 Tip: Run 'run-emulator --gpu' to attempt hardware rendering"
+             GPU_MODE="-gpu swiftshader_indirect"
+           fi
 
           echo ""
           echo "🚀 Starting emulator with $GPU_MODE..."
@@ -127,18 +127,34 @@
             -no-metrics 2>&1
         '';
 
-        # Flutter 3.3.0 with adjusted cmake/ninja paths
-        patchedFlutter = pkgs.flutter.overrideAttrs (oldAttrs: {
-          patchPhase = ''
-            runHook prePatch
-            substituteInPlace $FLUTTER_ROOT/packages/flutter_tools/gradle/src/main/kotlin/FlutterTask.kt \
-              --replace 'val cmakeExecutable = project.file(cmakePath).absolutePath' 'val cmakeExecutable = "cmake"' \
-              --replace 'val ninjaExecutable = project.file(ninjaPath).absolutePath' 'val ninjaExecutable = "ninja"'
-            find $FLUTTER_ROOT -name "*.gradle" -o -name "*.gradle.kts" | xargs -I {} \
-              sed -i 's|cmake/[^/]*/bin/cmake|cmake|g' {} 2>/dev/null || true
-            runHook postPatch
+        # Flutter 3.3.0 from official archive
+        flutter330 = pkgs.stdenv.mkDerivation rec {
+          pname = "flutter";
+          version = "3.3.0";
+          src = flutter-src;
+          
+          unpackPhase = ''
+            mkdir -p $out
+            cd $out
+            tar -xf $src --strip-components=1
           '';
-        });
+          
+          dontBuild = true;
+          dontConfigure = true;
+          
+          installPhase = ''
+            # Make all scripts executable
+            find . -name "*.sh" -exec chmod +x {} \;
+            chmod +x bin/flutter
+          '';
+          
+          postInstall = ''
+            # Create the Flutter bin symlink structure
+            mkdir -p $out/bin
+          '';
+        };
+        
+        patchedFlutter = flutter330;
 
         # Build version constraints for Flutter 3.3.0
         minSdkVersion = "21";
