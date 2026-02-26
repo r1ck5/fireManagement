@@ -148,7 +148,61 @@
 
       in
       {
-        devShells.default = (pkgs.buildFHSEnv {
+        # Fast dev shell for daily development (no FHS overhead)
+        devShells.default = pkgs.mkShell {
+          name = "flutter-3.3.0-dev";
+          buildInputs = with pkgs; [
+            bashInteractive
+            git
+            cmake
+            ninja
+            python3
+            jdk17
+            gradle
+            patchedFlutter
+            wrappedEmulator
+            androidEnv
+            glibc
+            zlib
+            ncurses5
+            stdenv.cc.cc.lib
+          ];
+
+          shellHook = ''
+            echo "Setting up Flutter 3.3.0 + Android dev environment..."
+            
+            # Setup Android environment
+            if [ -d "$PWD/.android/sdk" ]; then
+              export ANDROID_HOME="$PWD/.android/sdk"
+              export ANDROID_SDK_ROOT="$ANDROID_HOME"
+            else
+              mkdir -p "$PWD/.android/sdk"
+              export ANDROID_HOME="$PWD/.android/sdk"
+              export ANDROID_SDK_ROOT="$ANDROID_HOME"
+              cp -LR ${androidEnv}/share/android-sdk/* "$ANDROID_HOME/" 2>/dev/null || true
+              
+              for bin in adb avdmanager emulator sdkmanager; do
+                cp -LR ${androidEnv}/bin/$bin "$ANDROID_HOME/bin/" 2>/dev/null || true
+              done
+              
+              mkdir -p "$ANDROID_HOME/licenses"
+              for license in android-sdk-license android-sdk-preview-license googletv-license; do
+                touch "$ANDROID_HOME/licenses/$license"
+              done
+              
+              chmod -R u+w "$ANDROID_HOME" 2>/dev/null || true
+            fi
+
+            export JAVA_HOME="${pkgs.jdk17}"
+            export ANDROID_EMULATOR_HOME="$PWD/.android"
+            export FLUTTER_ANDROID_HOME="$ANDROID_HOME"
+            
+            echo "✅ Flutter 3.3.0 + Android dev environment ready (fast path)"
+          '';
+        };
+
+        # FHS shell for building (slower but more compatible)
+        devShells.fhs = (pkgs.buildFHSEnv {
           name = "FHS flutter-3.3.0-android-env";
           targetPkgs = pkgs: with pkgs; [
             bashInteractive
@@ -214,7 +268,7 @@
           ];
 
           profile = ''
-            echo "Setting up Flutter 3.3.0 + Android dev environment..."
+            echo "Setting up Flutter 3.3.0 + Android dev environment (FHS)..."
             
             export PATH="$FHS_LIB/usr/bin:$PATH"
             
@@ -275,7 +329,7 @@
             export FLUTTER_ANDROID_HOME="$ANDROID_HOME"
             export LD_LIBRARY_PATH="$FHS_LIB/usr/lib:$LD_LIBRARY_PATH"
             
-            echo "✅ Flutter 3.3.0 + Android dev environment ready"
+            echo "✅ Flutter 3.3.0 + Android dev environment ready (FHS)"
           '';
           runScript = "bash";
         }).env;
