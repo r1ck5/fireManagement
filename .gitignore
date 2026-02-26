@@ -151,6 +151,10 @@ app.*.symbols
 .direnv/
 .envrc.local
 
+# Nix development environment (local clones)
+.flutter/
+.android/
+
 # Generated environment files
 .flutter_env_ready
 .env.local
