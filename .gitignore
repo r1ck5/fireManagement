@@ -4,6 +4,7 @@
 # Miscellaneous
 *.class
 *.lock
+!flake.lock
 *.log
 *.pyc
 *.swp
