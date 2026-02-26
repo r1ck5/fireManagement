@@ -129,20 +129,28 @@
 
         # Clean Flutter archive by removing .git directory
         flutterArchiveClean = pkgs.runCommand "flutter-3.3.0-clean.tar.xz" { 
-          buildInputs = [ pkgs.xz ];
+          buildInputs = with pkgs; [ xz tar gnutar ];
+          preferLocalBuild = true;
+          allowSubstitutes = false;
         } ''
           mkdir -p work
           cd work
-          xz -d < ${flutter-src} | tar -x
           
-          # Remove all .git* files and directories
-          find . -name ".git" -type d -exec rm -rf {} + 2>/dev/null || true
+          # Decompress archive
+          xz -d -c ${flutter-src} | tar -x --warning=no-unknown-keyword
+          
+          # Remove all .git* files and directories that cause Nix issues
+          find . -name ".git" -type d -print0 | xargs -0 rm -rf 2>/dev/null || true
           find . -name ".git*" -type f -delete 2>/dev/null || true
           find . -name ".gitignore" -delete 2>/dev/null || true
           find . -name ".gitattributes" -delete 2>/dev/null || true
           
-          # Repack the archive
-          tar -c . | xz -9 > $out
+          # Remove other potentially problematic hidden files
+          find . -name "._*" -delete 2>/dev/null || true
+          find . -name ".DS_Store" -delete 2>/dev/null || true
+          
+          # Repack the archive for use by derivation
+          tar -c . --warning=no-unknown-keyword | xz -9 -T 0 > $out
         '';
         
         # Flutter 3.3.0 from cleaned archive
@@ -151,8 +159,11 @@
           version = "3.3.0";
           src = flutterArchiveClean;
           
+          buildInputs = [ pkgs.tar pkgs.xz ];
+          
           unpackPhase = ''
-            tar -xf $src --strip-components=1
+            tar -xf $src --strip-components=1 --warning=no-unknown-keyword 2>/dev/null || \
+            tar -xf $src --strip-components=1 2>/dev/null || true
           '';
           
           dontBuild = true;
@@ -160,12 +171,19 @@
           
           installPhase = ''
             # Make all scripts executable
-            find . -type f -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
-            [ -f bin/flutter ] && chmod +x bin/flutter || true
-            [ -f bin/dart ] && chmod +x bin/dart || true
+            find . -type f -name "*.sh" 2>/dev/null | while read f; do
+              chmod +x "$f" 2>/dev/null || true
+            done
             
-            # Ensure bin directory exists
+            for executable in bin/flutter bin/dart; do
+              if [ -f "$executable" ]; then
+                chmod +x "$executable"
+              fi
+            done
+            
+            # Ensure bin directory exists and is accessible
             mkdir -p bin
+            chmod +rx bin || true
           '';
         };
         
