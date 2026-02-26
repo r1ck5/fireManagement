@@ -247,113 +247,35 @@
 
             export LD_LIBRARY_PATH="$NIX_LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
 
-            # Fast path for subsequent runs
-            if [ -f "$PWD/.flutter_env_ready" ] && [ -d "$PWD/.android/sdk" ]; then
+            # Setup Android environment
+            if [ -d "$PWD/.android/sdk" ]; then
               export ANDROID_HOME="$PWD/.android/sdk"
               export ANDROID_SDK_ROOT="$ANDROID_HOME"
-              export JAVA_HOME="${pkgs.jdk17}"
-              export PATH="${pkgs.cmake}/bin:${pkgs.ninja}/bin:$PATH"
-              export LD_LIBRARY_PATH="$FHS_LIB/usr/lib:$LD_LIBRARY_PATH"
-              export ANDROID_EMULATOR_HOME="$PWD/.android"
-
-              echo "✅ Flutter environment ready (fast path)"
-              echo ""
-              echo "👉 Quick commands:"
-              echo "   flutter run              - Run on connected device"
-              echo "   run-emulator             - Launch Android emulator"
-              echo "   flutter build apk        - Build APK"
             else
-              # Full setup on first run
-              echo "Performing full environment setup (first run)..."
-              echo ""
-
-              "${androidEnv}/share/android-sdk/platform-tools/adb" kill-server &> /dev/null || true
-
               mkdir -p "$PWD/.android/sdk"
               export ANDROID_HOME="$PWD/.android/sdk"
               export ANDROID_SDK_ROOT="$ANDROID_HOME"
-              export JAVA_HOME="${pkgs.jdk17}"
-
-              gradle --version
-              echo "🔧 Using Java:"
-              "$JAVA_HOME/bin/java" -version
-              echo ""
-
-              mkdir -p "$ANDROID_HOME/licenses" "$ANDROID_HOME/avd" "$ANDROID_HOME/bin"
-              cp -LR ${androidEnv}/share/android-sdk/* "$ANDROID_HOME/" || true
-
+              cp -LR ${androidEnv}/share/android-sdk/* "$ANDROID_HOME/" 2>/dev/null || true
+              
               for bin in adb avdmanager emulator sdkmanager; do
-                cp -LR ${androidEnv}/bin/$bin "$ANDROID_HOME/bin/" || true
+                cp -LR ${androidEnv}/bin/$bin "$ANDROID_HOME/bin/" 2>/dev/null || true
               done
-              rm -rf "$ANDROID_HOME/cmake"
-
-              # Create cmake symlinks
-              mkdir -p "$ANDROID_HOME/cmake/3.22.1/bin"
-              ln -sf "${pkgs.cmake}/bin/cmake" "$ANDROID_HOME/cmake/3.22.1/bin/cmake"
-              ln -sf "${pkgs.ninja}/bin/ninja" "$ANDROID_HOME/cmake/3.22.1/bin/ninja"
-
-              chmod -R u+w "$ANDROID_HOME"
-              find "$ANDROID_HOME/bin" "$ANDROID_HOME/platform-tools" \
-                   "$ANDROID_HOME/emulator" "$ANDROID_HOME/cmdline-tools/latest/bin" \
-                   "$ANDROID_HOME/build-tools" -type f -exec chmod +x {} \; 2>/dev/null || true
-
-              # Accept licenses
+              
+              mkdir -p "$ANDROID_HOME/licenses"
               for license in android-sdk-license android-sdk-preview-license googletv-license; do
                 touch "$ANDROID_HOME/licenses/$license"
               done
-              yes | flutter doctor --android-licenses || true
-
-              flutter config --android-sdk "$ANDROID_HOME"
-
-              # Initialize project if needed
-              if [ ! -f pubspec.yaml ]; then
-                flutter create .
-                echo ".android/sdk" >> .gitignore
-              fi
-
-              if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-                git init
-                git add .
-                git commit -m "Initial Flake setup"
-              fi
-
-              mkdir -p android/app/src/main/{kotlin,java} android/app/src/debug/{kotlin,java}
-              mkdir -p android/app/src/profile/{kotlin,java} android/app/src/release/{kotlin,java}
-
-              # Configure gradle
-              mkdir -p android
-              touch android/gradle.properties
-              sed -i '/^android\.cmake\.path=/d' android/gradle.properties
-              sed -i '/^android\.ninja\.path=/d' android/gradle.properties
-              echo "android.cmake.path=${pkgs.cmake}/bin" >> android/gradle.properties
-              echo "android.ninja.path=${pkgs.ninja}/bin" >> android/gradle.properties
-
-              # Create AVD
-              if ! avdmanager list avd 2>/dev/null | grep -q 'android_emulator'; then
-                echo "Creating Android emulator..."
-                yes | avdmanager create avd \
-                  --name "android_emulator" \
-                  --package "system-images;android-34;google_apis_playstore;x86_64" \
-                  --device "pixel" \
-                  --abi "x86_64" \
-                  --tag "google_apis_playstore" \
-                  --force
-              fi
-
-              export PATH="${pkgs.cmake}/bin:${pkgs.ninja}/bin:$PATH"
-              flutter doctor --quiet
-              echo "✅ Flutter + Android dev shell ready"
-              touch "$PWD/.flutter_env_ready"
-
-              echo ""
-              echo "📚 Common Commands:"
-              echo "   flutter pub get          - Install dependencies"
-              echo "   flutter run              - Run on connected device"
-              echo "   run-emulator             - Launch Android emulator"
-              echo "   flutter build apk        - Build APK release"
-              echo "   flutter test             - Run tests"
-              echo "   dart analyze             - Analyze code"
+              
+              chmod -R u+w "$ANDROID_HOME" 2>/dev/null || true
             fi
+
+            export JAVA_HOME="${pkgs.jdk17}"
+            export PATH="${pkgs.cmake}/bin:${pkgs.ninja}/bin:$PATH"
+            export ANDROID_EMULATOR_HOME="$PWD/.android"
+            export FLUTTER_ANDROID_HOME="$ANDROID_HOME"
+            export LD_LIBRARY_PATH="$FHS_LIB/usr/lib:$LD_LIBRARY_PATH"
+            
+            echo "✅ Flutter 3.3.0 + Android dev environment ready"
           '';
           runScript = "bash";
         }).env;
