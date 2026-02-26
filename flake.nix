@@ -111,10 +111,16 @@
             # Kill any existing emulator instances before starting
             echo ""
             echo "🛑 Checking for existing emulator instances..."
-            pkill -f "emulator -avd android_emulator" 2>/dev/null || true
             
-            # Wait a moment for the process to fully terminate
-            sleep 2
+            # Kill emulator processes more aggressively
+            pkill -9 -f "emulator" 2>/dev/null || true
+            pkill -9 "emulator" 2>/dev/null || true
+            
+            # Also kill qemu processes that might be running the emulator
+            pkill -9 -f "qemu" 2>/dev/null || true
+            
+            # Wait for processes to fully terminate
+            sleep 3
             
             echo "✅ Ready to start emulator"
 
